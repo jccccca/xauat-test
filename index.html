@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XAUAT 建大灵魂测试 </title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
+        
+        :root {
+            --primary: #004b87;
+            --accent: #d4a017;
+            --text-main: #2c3e50;
+            --text-light: #596a7b;
+            --glass-bg: rgba(255, 255, 255, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.6);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(-45deg, #e0c3fc, #8ec5fc, #f0f8ff, #d4fc79);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 32px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 40px rgba(31, 38, 135, 0.18);
+            padding: 40px;
+            max-width: 550px;
+            width: 85%;
+            position: relative;
+            z-index: 10;
+            transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .fade-enter { animation: fadeIn 0.4s forwards; }
+        .fade-exit { animation: fadeOut 0.3s forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-15px); } }
+
+        /* 顶部进度条区 */
+        .quiz-header { width: 100%; display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 25px; }
+        .header-meta { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;}
+        .title { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+        .progress-text { font-size: 0.9rem; font-weight: bold; color: var(--primary); background: rgba(255,255,255,0.95); padding: 5px 15px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
+        
+        .progress-track { width: 100%; height: 8px; background: rgba(0,0,0,0.08); border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #4facfe); width: 0%; transition: width 0.3s ease-out; }
+
+        /* 题目区 */
+        #quiz-container { width: 100%; }
+        .question { font-size: 1.25rem; font-weight: 700; line-height: 1.6; margin-bottom: 30px; min-height: 70px; }
+
+        .options-grid { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+        .opt-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid transparent;
+            padding: 18px 25px;
+            border-radius: 20px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1.05rem;
+            color: var(--text-main);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            line-height: 1.4;
+            font-family: inherit;
+        }
+        .opt-btn:hover {
+            background: #ffffff;
+            border-color: var(--primary);
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(0, 75, 135, 0.1);
+        }
+
+        /* 结果展示区 */
+        #result-container { display: none; text-align: center; width: 100%; }
+        
+        /* 结果展示区 - 单图头像框（圆形） */
+        .result-avatar-area {
+            width: 200px;
+            height: 200px;
+            overflow: hidden;
+            margin: 0 auto 25px;
+            border-radius: 50%;
+            border: 8px solid white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            background: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #res-avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; 
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .result-content { width: 100%; }
+        .res-subtitle { font-size: 1rem; color: var(--text-light); margin-bottom: 8px; }
+        .res-title { font-size: 2.2rem; font-weight: 900; color: var(--primary); margin: 0 0 15px 0; }
+        
+        .match-meta { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 20px; }
+        .secondary-match { background: rgba(212, 160, 23, 0.15); display: inline-block; padding: 6px 18px; border-radius: 20px; font-size: 0.95rem; color: #856404; font-weight: bold;}
+        .score-info { font-size: 0.8rem; color: var(--text-light); font-weight: 500;}
+
+        .tags-area { margin-bottom: 25px; }
+        .tag { display: inline-block; background: var(--primary); color: white; padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; margin: 4px; }
+        
+        .res-desc { text-align: left; background: rgba(255,255,255,0.7); padding: 25px; border-radius: 20px; font-size: 1.05rem; line-height: 1.8; margin-bottom: 30px; border-left: 5px solid var(--accent); color: #333;}
+        
+        .btn-restart { background: linear-gradient(135deg, var(--primary) 0%, #003666 100%); color: white; border: none; padding: 18px 50px; font-size: 1.2rem; border-radius: 35px; cursor: pointer; font-weight: bold; transition: all 0.3s ease; font-family: inherit;}
+        .btn-restart:hover { transform: scale(1.05); box-shadow: 0 8px 25px rgba(0, 75, 135, 0.3); }
+        
+        /* 背景装饰 */
+        .circle { position: fixed; border-radius: 50%; filter: blur(70px); z-index: 1; opacity: 0.5;}
+        .c1 { width: 400px; height: 400px; background: #ff9a9e; top: -100px; left: -100px; }
+        .c2 { width: 500px; height: 500px; background: #a1c4fd; bottom: -150px; right: -100px; }
+    </style>
+</head>
+<body>
+
+<div class="circle c1"></div>
+<div class="circle c2"></div>
+
+<div class="glass-card" id="main-card">
+    <div id="quiz-container" class="fade-enter">
+        <div class="quiz-header">
+            <div class="header-meta">
+                <div class="title">✨ 建大灵魂测试</div>
+                <div class="progress-text" id="progress-text">1 / 30</div>
+            </div>
+            <div class="progress-track"><div class="progress-fill" id="progress-bar"></div></div>
+        </div>
+        <div class="question" id="question-text"></div>
+        <div class="options-grid" id="options-area"></div>
+    </div>
+
+    <div id="result-container">
+        <div class="result-avatar-area">
+            <img id="res-avatar-img" src="" alt="学院代表人物">
+        </div>
+
+        <div class="result-content">
+            <div class="res-subtitle">经过30重维度的解析，你最契合的灵魂归属是</div>
+            <div class="res-title" id="res-primary"></div>
+            
+            <div class="match-meta">
+                <div class="secondary-match" id="res-secondary"></div>
+                <div class="score-info" id="res-score-detail"></div>
+            </div>
+            
+            <div class="tags-area" id="res-tags"></div>
+            <div class="res-desc" id="res-desc"></div>
+            
+            <button class="btn-restart" onclick="location.reload()">🔄 重新测试</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 18个学院的图鉴数据及映射
+    const colleges = {
+        Arch: { name: "建筑学院", tags: ["空间美学", "造梦大师", "人文关怀"], desc: "你拥有敏锐的感官与极高的美学追求。你关注事物的整体感知和视觉和谐，建大著名的建筑老八校底蕴，最适合承载你天马行空的想象力。" },
+        Civil: { name: "土木工程学院", tags: ["脚踏实地", "结构安全", "硬核实干"], desc: "你有着极强的安全感需求和实用主义精神。你关注事物的承重与底层逻辑，做事沉稳可靠，你是撑起现代文明的基石。" },
+        Env: { name: "环境与市政工程学院", tags: ["可持续思维", "生态卫士", "社会责任"], desc: "你有着很强的环保意识和长远眼光。比起短暂的利益，你更关注事物循环的健康度和合理性，你是绿色地球的守护者。" },
+        BldgServ: { name: "建筑设备科学与工程学院", tags: ["人居环境", "冷暖自知", "系统优化"], desc: "你非常注重生活品质和环境的舒适度（温度、湿度、空气）。你喜欢让复杂的系统在幕后安静且高效地运转，是舒适生活的隐形缔造者。" },
+        Mat: { name: "材料科学与工程学院", tags: ["溯本求源", "微观洞察", "物性探索"], desc: "你不满足于表象，喜欢探究事物的本质和微观构成。建筑的强度、科技的进步都离不开你对物质底层的钻研。" },
+        Mgmt: { name: "管理学院", tags: ["统筹规划", "资源配置", "理性高效"], desc: "你是个天生的操盘手！对数字和风险敏感，擅长在复杂局面中找出最优解，把混乱变得井井有条，站在全局调兵遣将。" },
+        Mech: { name: "机电工程学院", tags: ["机械动力", "精密制造", "实操达人"], desc: "你有着极强的动手能力和对机械运转原理的好奇心。齿轮的咬合、引擎的轰鸣能让你感到兴奋，你是现代工业的驱动者。" },
+        Metal: { name: "冶金工程学院", tags: ["淬火成金", "高温炼淬", "转化魔术"], desc: "你性格坚韧，能够承受压力。你对物质在极端条件下的转化感兴趣，懂得如何去粗取精，提炼出最有价值的核心。" },
+        IT: { name: "信息与控制工程学院", tags: ["逻辑缜密", "代码极客", "智能先锋"], desc: "你的大脑就像一台精密的计算机，崇尚算法、流程和效率。你喜欢探究智能控制的机制并试图用技术解放人力。" },
+        Art: { name: "艺术学院", tags: ["纯粹审美", "创意无限", "情感表达"], desc: "你是一个感性且富有创造力的人。你对色彩、形态和情感的表达有独到的见解，比起严谨的公式，你更相信直觉和灵感。" },
+        Sci: { name: "理学院", tags: ["万物之理", "数学逻辑", "绝对理性"], desc: "你追求真理，拥有强大的抽象思维能力。你喜欢剥开纷繁复杂的外表，用最基础的数学和物理法则来解释这个世界。" },
+        Lit: { name: "文学院", tags: ["文字共情", "人文之光", "思想载体"], desc: "你心思细腻，富有同理心。你相信文字和文化的力量，擅长捕捉生活中的情绪，并用优雅的方式表达出来。" },
+        Marx: { name: "马克思主义学院", tags: ["宏观思辨", "历史唯物", "信仰坚定"], desc: "你具备极强的宏观视野和思辨能力。你喜欢探究社会发展的客观规律，关注思想引领和人类命运的走向。" },
+        Res: { name: "资源工程学院", tags: ["地阔天长", "探寻宝藏", "勇敢开拓"], desc: "你向往广阔的天地，对地球深处的宝藏充满好奇。你具备探索精神和吃苦耐劳的品质，是国家能源与矿产的开路先锋。" },
+        PubAdm: { name: "公共管理学院", tags: ["社会秩序", "政策制定", "协调共赢"], desc: "你关注社会公平与公共利益。你擅长人际交往与矛盾协调，热衷于建立优良的秩序和规则，让社会运转更高效。" },
+        Chem: { name: "化学与化工学院", tags: ["分子重组", "实验见真", "奇妙反应"], desc: "你对事物之间的奇妙反应充满好奇。你做事严谨，喜欢在实验室里通过微观的重组，创造出世界上本不存在的新物质。" },
+        Sports: { name: "体育学院", tags: ["强健体魄", "竞技精神", "突破极限"], desc: "你充满活力，自律且富有激情。你相信汗水和努力的力量，享受竞技带来的多巴胺分泌，追求身心的突破。" },
+        Trans: { name: "城市发展与现代交通学院", tags: ["脉络规划", "川流不息", "城市动脉"], desc: "你的思维具有很强的流动性和全局观。你关注城市路网的分布、人流物流的效率，你致力于让复杂的现代城市血脉畅通。" }
+    };
+
+    // 映射学院代码到裁剪好的本地图片文件名
+    const collegeImages = {
+        Arch: "1.jpg", Civil: "2.jpg", Env: "3.jpg", BldgServ: "4.jpg",
+        Mat: "5.jpg", Mgmt: "6.jpg", Mech: "7.jpg", Metal: "8.jpg",
+        IT: "9.jpg", Art: "10.jpg", Sci: "11.jpg", Lit: "12.jpg",
+        Marx: "13.jpg", Res: "14.jpg", PubAdm: "15.jpg", Chem: "16.jpg",
+        Sports: "17.jpg", Trans: "18.jpg"
+    };
+
+    // 30道全场景题目
+    const questions = [
+        // 1-5 团队与社交
+        { q: "1. 小组作业遇到严重分歧，作为组员你的第一反应是？", opts: [
+            { t: "迅速整理双方逻辑漏洞，用数据和客观事实说话", s: {Sci:2, IT:1, Mgmt:1} },
+            { t: "安抚双方情绪，寻找能让大家利益最大化的折中方案", s: {PubAdm:3, Lit:1} },
+            { t: "从宏观方向分析，指出哪个方案更符合项目的核心价值观", s: {Marx:3, Mgmt:1} },
+            { t: "觉得吵架太低效，自己默默把核心难点先做出来", s: {IT:2, Mech:2, Civil:1} }
+        ]},
+        { q: "2. 策划一场班级团建，你最想负责哪部分工作？", opts: [
+            { t: "设计海报、拍照修图，把活动包装得高大上", s: {Art:3, Arch:1} },
+            { t: "做财务预算，精打细算砍价，安排交通大巴", s: {Mgmt:2, Trans:2} },
+            { t: "策划户外竞技游戏，带大家去流汗释放压力", s: {Sports:3} },
+            { t: "准备应急药箱，排查场地安全隐患", s: {Civil:2, Env:1, BldgServ:1} }
+        ]},
+        { q: "3. 如果只能拥有一种超能力，你希望是？", opts: [
+            { t: "与世间万物对话，感知它们的喜怒哀乐", s: {Lit:3, Env:1} },
+            { t: "过目不忘的超级算力，大脑堪比量子计算机", s: {IT:3, Sci:1} },
+            { t: "掌控元素，能将一块石头瞬间炼化成纯金", s: {Metal:3, Chem:2} },
+            { t: "无视地形瞬间移动，随时去地球任何角落", s: {Trans:3, Res:2} }
+        ]},
+        { q: "4. 你觉得什么样的沟通方式最让你舒服？", opts: [
+            { t: "直奔主题，分条列点陈述，不要废话", s: {IT:2, Mgmt:2, Civil:1} },
+            { t: "引经据典，用幽默或深刻的比喻来表达", s: {Lit:3, Marx:1} },
+            { t: "大家坐下来喝杯茶，在轻松的氛围里慢慢聊", s: {PubAdm:2, Art:1} },
+            { t: "边走边聊或者边做边聊，我不喜欢一直坐着", s: {Sports:2, Mech:1} }
+        ]},
+        { q: "5. 当有人对你的专业/爱好提出质疑时，你会？", opts: [
+            { t: "摆出底层的理论公式或硬核证据反驳他", s: {Sci:3, Mat:1} },
+            { t: "从哲学或社会发展规律的高度给他上课", s: {Marx:3, PubAdm:1} },
+            { t: "无所谓，美是主观的，懂的人自然懂", s: {Art:3, Arch:1} },
+            { t: "直接现场动手展示给他看，用结果打脸", s: {Mech:2, Chem:2, IT:1} }
+        ]},
+        // 6-10 生活与消费
+        { q: "6. 准备换一部新手机，你最看重？", opts: [
+            { t: "处理器跑分、内存大小和散热模组", s: {IT:3, Mech:1} },
+            { t: "机身材质（陶瓷/钛合金）和握持的质感", s: {Mat:3, Arch:1} },
+            { t: "综合性价比和二手的保值率", s: {Mgmt:3} },
+            { t: "屏幕色彩的准确度和镜头拍照的氛围感", s: {Art:2, Lit:1} }
+        ]},
+        { q: "7. 你的房间/书桌现在处于什么状态？", opts: [
+            { t: "有专门的收纳盒，物品按类别和使用频率放好", s: {Mgmt:2, IT:1} },
+            { t: "乱中有序，并且一定要摆放我喜欢的装饰品或绿植", s: {Art:2, Env:2} },
+            { t: "注重舒适，椅子高度、台灯色温和室内通风必须完美", s: {BldgServ:3} },
+            { t: "堆了一些正在拆解/维修的电子产品或小玩意", s: {Mech:3, IT:1} }
+        ]},
+        { q: "8. 逛超市买零食/饮料时，你偶尔会下意识地？", opts: [
+            { t: "翻看背后的配料表，看添加剂和化学成分", s: {Chem:3, Env:1} },
+            { t: "计算买大包装还是小包装的每克单价更划算", s: {Mgmt:3, Sci:1} },
+            { t: "被包装盒的优美设计或奇特造型吸引", s: {Art:2, Arch:2} },
+            { t: "看包装是不是可降解材料，是否环保", s: {Env:3, Mat:1} }
+        ]},
+        { q: "9. 打算自己做一顿饭，你的风格是？", opts: [
+            { t: "严格按照菜谱的克数和火候来，像做化学实验一样", s: {Chem:3, Sci:1} },
+            { t: "边做边收拾，统筹好两个锅的进度，做完厨房干干净净", s: {Mgmt:2, PubAdm:1} },
+            { t: "注重摆盘和色彩搭配，必须拍照发个朋友圈", s: {Art:3, Lit:1} },
+            { t: "看冰箱里剩什么，随便炒个大杂烩，能填饱肚子就行", s: {Civil:2, Res:1} }
+        ]},
+        { q: "10. 买了一件需要自己拼装的宜家家具，你会？", opts: [
+            { t: "掂量五金件够不够结实，考虑承重能力", s: {Civil:3, Mat:1} },
+            { t: "先分类所有零件，规划一条最省时间的拼装路线", s: {IT:2, Trans:2} },
+            { t: "兴奋地享受拧螺丝和拼装机械结构的动手过程", s: {Mech:3} },
+            { t: "想象它拼好后放在房间哪个位置最有空间感", s: {Arch:3, Art:1} }
+        ]},
+        // 11-15 娱乐与媒介
+        { q: "11. 玩《我的世界》或沙盒游戏时，你最爱干嘛？", opts: [
+            { t: "造房子，外观必须漂亮，内饰也要考究", s: {Arch:3, Art:1} },
+            { t: "研究红石电路，做全自动流水线或陷阱", s: {IT:3, Mech:1} },
+            { t: "疯狂挖矿，执着于寻找稀有矿石和探索地下世界", s: {Res:3, Metal:1} },
+            { t: "铺设铁路系统，连接所有基地，规划交通网", s: {Trans:3} }
+        ]},
+        { q: "12. 刷短视频时，哪类内容更容易让你停下手指？", opts: [
+            { t: "大国工程纪录片、大桥建设、高温锻造工艺", s: {Civil:2, Metal:2} },
+            { t: "社会热点深度锐评、国际局势与历史剖析", s: {Marx:3, PubAdm:1} },
+            { t: "文学名著解说、电影美学分析或感人故事", s: {Lit:3, Art:1} },
+            { t: "极限运动第一视角、健身干货、比赛集锦", s: {Sports:3} }
+        ]},
+        { q: "13. 休息日去参观博物馆，你最想去哪个展馆？", opts: [
+            { t: "古代建筑复原模型或现当代艺术展", s: {Arch:2, Art:2} },
+            { t: "矿物晶体、奇石化石或古生物遗迹展", s: {Res:3, Mat:1} },
+            { t: "古代兵器、青铜器冶炼或工业革命机械展", s: {Metal:2, Mech:2} },
+            { t: "历史文物背后的朝代更迭与社会制度演变展", s: {Marx:2, PubAdm:2} }
+        ]},
+        { q: "14. 看科幻电影时，你最容易因为什么而感到出戏（看不下去）？", opts: [
+            { t: "基础物理定律完全错误，逻辑漏洞百出", s: {Sci:3, IT:1} },
+            { t: "特效太假，场景设计毫无美感", s: {Art:2, Arch:2} },
+            { t: "台词尴尬，人物情感缺乏铺垫，像工具人", s: {Lit:3} },
+            { t: "社会制度和经济体系的设计过于幼稚", s: {Mgmt:2, Marx:2} }
+        ]},
+        { q: "15. 如果让你写一本书，最可能是？", opts: [
+            { t: "一本感人至深的小说或优美的散文集", s: {Lit:3} },
+            { t: "一本关于如何提升效率和财务自由的指南", s: {Mgmt:3} },
+            { t: "一本揭示某种社会现象或历史规律的专著", s: {PubAdm:2, Marx:2} },
+            { t: "一本硬核科普，解释日常事物背后的科学原理", s: {Sci:2, Chem:1} }
+        ]},
+        // 16-20 观察与思考
+        { q: "16. 走在陌生的城市街头，你最先注意到？", opts: [
+            { t: "建筑的轮廓线条、天际线和街区色彩", s: {Arch:3, Art:1} },
+            { t: "马路的宽窄、红绿灯时长及车流的顺畅度", s: {Trans:3, PubAdm:1} },
+            { t: "下水道井盖的分布、街道绿化和空气质量", s: {Env:3, BldgServ:1} },
+            { t: "商铺的分布密度、客流量和物价水平", s: {Mgmt:3} }
+        ]},
+        { q: "17. 遇到突如其来的大暴雨，你在避雨时会想？", opts: [
+            { t: "欣赏雨景，觉得有一种忧郁浪漫的文学意境", s: {Lit:3, Art:1} },
+            { t: "担忧城市的排水系统和地下管网能不能扛得住", s: {Env:3, Civil:1} },
+            { t: "思考云层的形成条件和这场雨的物理降水量", s: {Sci:3} },
+            { t: "计算这场雨会导致交通拥堵多久，如何调整出行计划", s: {Trans:2, IT:1} }
+        ]},
+        { q: "18. 在一栋超高层写字楼里，你比较好奇？", opts: [
+            { t: "整栋楼的承重柱在哪，它怎么抗强风和地震", s: {Civil:3, Mat:1} },
+            { t: "中央空调怎么把冷气均匀送到几十层，电梯怎么调度", s: {BldgServ:3, IT:1} },
+            { t: "大堂的装潢设计风格和空间挑高利用率", s: {Arch:3} },
+            { t: "这栋楼的租金收益率和物业管理模式", s: {Mgmt:3, PubAdm:1} }
+        ]},
+        { q: "19. 对于“碳中和”与新能源，你的视角是？", opts: [
+            { t: "这是人类社会发展的必然历史规律", s: {Marx:3} },
+            { t: "关键在于光伏材料、电池化学储能技术的突破", s: {Mat:2, Chem:2} },
+            { t: "核心是改变资源消耗结构，保护生态水土", s: {Env:3, Res:1} },
+            { t: "这是一个巨大的商业风口和产业链重组机会", s: {Mgmt:2, PubAdm:1} }
+        ]},
+        { q: "20. 看到一座宏伟的跨海大桥，你的感叹是？", opts: [
+            { t: "结构的力量太伟大了，人类基建的奇迹！", s: {Civil:3} },
+            { t: "它像一条巨龙横跨海面，风景太美了！", s: {Art:2, Lit:2} },
+            { t: "防海水腐蚀的涂层材料和特种钢材真厉害！", s: {Mat:2, Chem:1, Metal:1} },
+            { t: "它将极大缩短两岸物流时间，带动区域经济！", s: {Trans:3, Mgmt:1} }
+        ]},
+        // 21-25 习惯与偏好
+        { q: "21. 如果让你连续几天宅在家里，你会？", opts: [
+            { t: "完全待不住，必须出门跑个步或打场球才舒服", s: {Sports:4} },
+            { t: "享受独处，安静地看书、听音乐或画画", s: {Lit:2, Art:2} },
+            { t: "抓紧时间搞自己的小发明、写代码或玩硬核游戏", s: {IT:2, Mech:2} },
+            { t: "趁机把家里彻底大扫除，优化一下家具布局", s: {BldgServ:2, Arch:1} }
+        ]},
+        { q: "22. 你平常怎样整理自己的电脑文件？", opts: [
+            { t: "随用随建，桌面有点乱，但用搜索工具一秒能找到", s: {IT:2, Sci:1} },
+            { t: "极其严格的多级文件夹分类，按年份/项目排好", s: {Mgmt:3, PubAdm:1} },
+            { t: "经常把一些废弃文件丢进回收站，保持系统干净", s: {Env:2} },
+            { t: "文件夹封面和桌面壁纸必须好看，不好看受不了", s: {Art:3} }
+        ]},
+        { q: "23. 你更喜欢什么样的天气？", opts: [
+            { t: "阳光明媚，适合户外运动和尽情挥洒汗水", s: {Sports:3, Res:1} },
+            { t: "室内温度24℃，湿度50%，外面怎样无所谓", s: {BldgServ:4} },
+            { t: "微风不燥，空气清新，能闻到泥土和树叶的味道", s: {Env:2, Lit:1} },
+            { t: "电闪雷鸣，感受到大自然剧烈物理/化学反应的力量", s: {Sci:2, Chem:1} }
+        ]},
+        { q: "24. 如果要养一只宠物，你首先考虑？", opts: [
+            { t: "它的毛发颜色、长相够不够可爱/优雅", s: {Art:2, Arch:1} },
+            { t: "每个月的开销，以及我有没有足够的时间陪伴它", s: {Mgmt:3, PubAdm:1} },
+            { t: "它的排泄物好不好清理，会不会弄脏屋子环境", s: {Env:3} },
+            { t: "能不能带它出去奔跑、玩飞盘，有互动性", s: {Sports:3} }
+        ]},
+        { q: "25. 对于“规则”，你的态度是？", opts: [
+            { t: "规则是维持秩序的工具，必须遵守和完善", s: {PubAdm:3, Mgmt:1} },
+            { t: "规则是客观逻辑的体现，像数学定理一样严谨", s: {Sci:3} },
+            { t: "规则就是用来被打破的，创意不需要被束缚", s: {Art:3, Lit:1} },
+            { t: "我更喜欢研究系统的漏洞（Bug），并修复它", s: {IT:3} }
+        ]},
+        // 26-30 深度假设
+        { q: "26. 如果让你回到古代，你最想成为？", opts: [
+            { t: "挥毫泼墨的大诗人，或者绘制传世画卷的画师", s: {Lit:2, Art:2} },
+            { t: "开山采矿、铸造绝世兵器或炼制丹药的奇人", s: {Res:2, Metal:2, Chem:1} },
+            { t: "设计宏伟宫殿或主持修建都江堰的工匠大师", s: {Arch:2, Civil:2} },
+            { t: "统筹粮草、变法图强、治理一方的国相", s: {PubAdm:2, Mgmt:2} }
+        ]},
+        { q: "27. 你觉得人类未来100年最需要突破的技术是？", opts: [
+            { t: "强人工智能与量子计算，彻底改变生产力", s: {IT:3, Sci:1} },
+            { t: "常温超导与新型材料，引发第四次工业革命", s: {Mat:3, Mech:1} },
+            { t: "可控核聚变与清洁能源，拯救地球生态", s: {Env:2, Chem:2} },
+            { t: "星际交通与太空挖矿，拓展人类生存空间", s: {Trans:2, Res:2} }
+        ]},
+        { q: "28. 面对一堆杂乱无章的数据或信息，你会？", opts: [
+            { t: "写个脚本或者用Excel函数把它们瞬间清洗分类", s: {IT:3, Mgmt:1} },
+            { t: "寻找数据背后的社会学意义或哲学规律", s: {Marx:3, Lit:1} },
+            { t: "把它做成极具美感的数据可视化图表", s: {Art:3} },
+            { t: "提炼出最核心的指标，作为我下一步决策的依据", s: {Mgmt:2, PubAdm:2} }
+        ]},
+        { q: "29. 你理想中的大学生活必须包含？", opts: [
+            { t: "丰富的社团、人文讲座和激烈的思想碰撞", s: {Lit:2, Marx:2, PubAdm:1} },
+            { t: "在先进的实验室里通宵做实验，见证奇迹", s: {Chem:2, Sci:2, Mat:1} },
+            { t: "跟着老师下工地、去野外测绘，实地考察", s: {Civil:2, Res:2} },
+            { t: "在画室熬夜画图，或者在运动场上挥洒汗水", s: {Arch:2, Sports:2} }
+        ]},
+        { q: "30. 最后，如果你要把西安建大推荐给别人，你会用哪个词？", opts: [
+            { t: "底蕴深厚，大师辈出", s: {Arch:2, Lit:1, Marx:1} },
+            { t: "硬核工科，实干兴邦", s: {Civil:2, Mech:1, Metal:1} },
+            { t: "前沿交叉，智慧赋能", s: {IT:2, Trans:1, BldgServ:1} },
+            { t: "经世致用，守护生态", s: {Env:2, Mgmt:1, PubAdm:1} }
+        ]}
+    ];
+
+    let currentQ = 0;
+    let scores = {};
+    for (let key in colleges) { scores[key] = 0; }
+    
+    const card = document.getElementById('quiz-container');
+
+    function renderQuestion() {
+        const q = questions[currentQ];
+        // 更新进度
+        document.getElementById('progress-text').innerText = `${currentQ + 1} / 30`;
+        setTimeout(() => {
+            document.getElementById('progress-bar').style.width = ((currentQ) / 30 * 100) + '%';
+        }, 50);
+
+        // 渲染题目
+        document.getElementById('question-text').innerText = q.q;
+        const optionsArea = document.getElementById('options-area');
+        optionsArea.innerHTML = '';
+        
+        q.opts.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'opt-btn';
+            btn.style.animation = `fadeIn 0.3s ease forwards ${index * 0.08}s`;
+            btn.style.opacity = '0';
+            
+            // 简单的随机图标
+            const icons = ["💡", "✨", "🎯", "🧩", "🔍", "🚀", "🌿", "⚙️", "🛠️", "🌍", "📊", "💻"];
+            const icon = icons[Math.floor(Math.random() * icons.length)];
+            
+            btn.innerHTML = `<span class="opt-icon">${icon}</span><span style="flex:1;">${opt.t}</span>`;
+            btn.onclick = () => handleSelect(opt.s);
+            optionsArea.appendChild(btn);
+        });
+    }
+
+    function handleSelect(scoreObj) {
+        // 计分
+        for (let key in scoreObj) { if(scores[key] !== undefined) scores[key] += scoreObj[key]; }
+        
+        // 转场动画
+        card.classList.remove('fade-enter');
+        card.classList.add('fade-exit');
+
+        setTimeout(() => {
+            currentQ++;
+            card.classList.remove('fade-exit');
+            if (currentQ < questions.length) {
+                renderQuestion();
+                card.classList.add('fade-enter');
+            } else {
+                showResult();
+            }
+        }, 300);
+    }
+
+    function showResult() {
+        // 隐藏题目区域，显示结果区域
+        document.getElementById('quiz-container').style.display = 'none';
+        
+        const resContainer = document.getElementById('result-container');
+        resContainer.style.display = 'block';
+        resContainer.classList.add('fade-enter');
+
+        // 核心逻辑：排序找出得分最高的前两个学院
+        const sortedColleges = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
+        const primary = sortedColleges[0];
+        const secondary = sortedColleges[1];
+
+        const primaryData = colleges[primary];
+        const secondaryData = colleges[secondary];
+
+      
+        const imageFileName = collegeImages[primary]; // 获取对应图片名
+        const avatarImgEl = document.getElementById('res-avatar-img');
+
+        if (imageFileName) {
+            avatarImgEl.src = imageFileName;
+        } else {
+            // 兜底图片（如果没有找到的话）
+            avatarImgEl.src = "1.jpg";
+        }
+
+        // --- 填充结果文本数据 ---
+        document.getElementById('res-primary').innerText = primaryData.name;
+        document.getElementById('res-secondary').innerText = `✨ 辅修建议 / 隐藏潜能：${secondaryData.name}`;
+        
+        // 得分细节
+        document.getElementById('res-score-detail').innerText = `【${primaryData.name}】得分为 ${scores[primary]}分，在所有维度中匹配度最高。`;
+        
+        // 渲染标签
+        const tagsHtml = primaryData.tags.map(tag => `<span class="tag">#${tag}</span>`).join('');
+        document.getElementById('res-tags').innerHTML = tagsHtml;
+        
+        // 渲染描述
+        document.getElementById('res-desc').innerHTML = `
+            <strong>你的核心特质：</strong><br>
+            ${primaryData.desc}<br><br>
+            <em>在本次30重维度的深度灵魂解析中，你在【${primaryData.name}】领域的潜能匹配度达到了顶峰。你所表现出的思维模式与该学院致力于培养的跨界人才特质高度契合。紧随其后的是你的隐藏天赋领域【${secondaryData.name}】。你适合在主修领域深度钻研的同时，跨界融合辅修领域的知识，成为建大最复合型的卓越灵魂！</em>
+        `;
+    }
+
+    // 启动测试
+    renderQuestion();
+</script>
+</body>
+</html>
