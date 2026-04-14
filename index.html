@@ -628,7 +628,7 @@
         let displayPrimaryScore = matchPercentages[primary].toFixed(1);
         let displaySecondaryScore = matchPercentages[secondary].toFixed(1);
 
-        document.getElementById('res-score-detail').innerText = `【${primaryData.name}】灵魂契合度高达 ${displayPrimaryScore}% ;
+        document.getElementById('res-score-detail').innerText = `【${primaryData.name}】灵魂契合度高达 ${displayPrimaryScore}%`;
         
         const tagsHtml = primaryData.tags.map(tag => `<span class="tag">#${tag}</span>`).join('');
         document.getElementById('res-tags').innerHTML = tagsHtml;
