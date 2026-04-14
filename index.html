@@ -546,38 +546,64 @@
         resContainer.style.display = 'block';
         resContainer.classList.add('fade-enter');
 
-        // 1. 动态计算每个学院的理论最高分 (Max Possible Score)
         let maxPossibleScores = {};
-        for (let key in colleges) { maxPossibleScores[key] = 0; }
+        let expectedScores = {}; // 新增：瞎选的期望平均分
+        for (let key in colleges) { 
+            maxPossibleScores[key] = 0; 
+            expectedScores[key] = 0; 
+        }
         
+        // 1. 精准计算理论最高分 与 瞎选期望值
         questions.forEach(q => {
-            // 找出这道题里，每个学院能拿到的最高分
             let tempMax = {};
+            let tempSum = {};
+            let optCount = q.opts.length;
+
             q.opts.forEach(opt => {
                 for (let key in opt.s) {
-                    if (!tempMax[key] || opt.s[key] > tempMax[key]) {
-                        tempMax[key] = opt.s[key];
+                    let val = opt.s[key];
+                    // 找出最高分
+                    if (!tempMax[key] || val > tempMax[key]) {
+                        tempMax[key] = val;
                     }
+                    // 累加该题的所有可能得分，用于算平均期望
+                    tempSum[key] = (tempSum[key] || 0) + val;
                 }
             });
-            // 累加到全局理论最高分中
+
             for (let key in tempMax) {
                 maxPossibleScores[key] += tempMax[key];
+                // 期望值 = 这道题所有选项该学院得分的总和 / 选项数量
+                expectedScores[key] += (tempSum[key] || 0) / optCount; 
             }
         });
 
-        // 2. 计算归一化百分比 (契合度)
+        // 2. 终极公平归一化：Z-Score 偏离度算法
         let matchPercentages = {};
         for (let key in scores) {
-            if (maxPossibleScores[key] > 0) {
-                // 计算百分比并保留一位小数
-                matchPercentages[key] = ((scores[key] / maxPossibleScores[key]) * 100).toFixed(1);
+            let userScore = scores[key];
+            let maxScore = maxPossibleScores[key];
+            let expected = expectedScores[key];
+
+            if (maxScore > 0) {
+                // 核心改动：(实际得分 - 期望分) / (最高分 - 期望分)
+                // 这样能算出你比“纯靠运气瞎蒙”高出了多少，挤干了水分
+                let trueAffinity = (userScore - expected) / (maxScore - expected);
+                
+                // 防止出现负数（如果你选的全是扣分项或完全避开），保底为 0
+                trueAffinity = Math.max(0, trueAffinity);
+                
+                // 转化为百分比
+                matchPercentages[key] = trueAffinity * 100;
+                
+                // 添加防平局微扰：加上 0.0001~0.0009 的随机小数，肉眼看不见，但计算机排序时绝对不会并列
+                matchPercentages[key] += Math.random() * 0.001; 
             } else {
                 matchPercentages[key] = 0;
             }
         }
 
-        // 3. 根据百分比进行排序
+        // 3. 根据最终纯净契合度进行排序
         const sortedColleges = Object.keys(matchPercentages).sort((a, b) => matchPercentages[b] - matchPercentages[a]);
         const primary = sortedColleges[0];
         const secondary = sortedColleges[1];
@@ -585,7 +611,7 @@
         const primaryData = colleges[primary];
         const secondaryData = colleges[secondary];
 
-        // 4. 处理单张圆形人物头像
+        // 4. 处理头像显示
         const imageFileName = collegeImages[primary];
         const avatarImgEl = document.getElementById('res-avatar-img');
         if (imageFileName) {
@@ -594,12 +620,15 @@
             avatarImgEl.src = "1.jpg";
         }
 
-        // 5. 填充结果文本数据
+        // 5. 渲染结果
         document.getElementById('res-primary').innerText = primaryData.name;
         document.getElementById('res-secondary').innerText = `✨ 辅修建议 / 隐藏潜能：${secondaryData.name}`;
         
-        // 显示百分比得分
-        document.getElementById('res-score-detail').innerText = `【${primaryData.name}】灵魂契合度高达 ${matchPercentages[primary]}%，在所有维度中匹配度最高。`;
+        // 截取保留一位小数用于显示，去掉后面的微扰小数
+        let displayPrimaryScore = matchPercentages[primary].toFixed(1);
+        let displaySecondaryScore = matchPercentages[secondary].toFixed(1);
+
+        document.getElementById('res-score-detail').innerText = `【${primaryData.name}】灵魂契合度高达 ${displayPrimaryScore}% (已过滤运气水分)。`;
         
         const tagsHtml = primaryData.tags.map(tag => `<span class="tag">#${tag}</span>`).join('');
         document.getElementById('res-tags').innerHTML = tagsHtml;
@@ -607,7 +636,7 @@
         document.getElementById('res-desc').innerHTML = `
             <strong>你的核心特质：</strong><br>
             ${primaryData.desc}<br><br>
-            <em>在本次30重维度的深度灵魂解析中，你在【${primaryData.name}】领域的潜能匹配度达到了顶峰。紧随其后的是你的隐藏天赋领域【${secondaryData.name}】（契合度 ${matchPercentages[secondary]}%）。你适合在主修领域深度钻研的同时，跨界融合辅修领域的知识！</em>
+            <em>经过绝对公平的防运气算法解析，你在【${primaryData.name}】领域的潜能匹配度达到了顶峰。紧随其后的是你的隐藏天赋领域【${secondaryData.name}】（契合度 ${displaySecondaryScore}%）。</em>
         `;
     }
     // 启动测试
