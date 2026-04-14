@@ -628,7 +628,7 @@
         let displayPrimaryScore = matchPercentages[primary].toFixed(1);
         let displaySecondaryScore = matchPercentages[secondary].toFixed(1);
 
-        document.getElementById('res-score-detail').innerText = `【${primaryData.name}】灵魂契合度高达 ${displayPrimaryScore}% (已过滤运气水分)。`;
+        document.getElementById('res-score-detail').innerText = `【${primaryData.name}】灵魂契合度高达 ${displayPrimaryScore}% ;
         
         const tagsHtml = primaryData.tags.map(tag => `<span class="tag">#${tag}</span>`).join('');
         document.getElementById('res-tags').innerHTML = tagsHtml;
@@ -636,7 +636,7 @@
         document.getElementById('res-desc').innerHTML = `
             <strong>你的核心特质：</strong><br>
             ${primaryData.desc}<br><br>
-            <em>经过绝对公平的防运气算法解析，你在【${primaryData.name}】领域的潜能匹配度达到了顶峰。紧随其后的是你的隐藏天赋领域【${secondaryData.name}】（契合度 ${displaySecondaryScore}%）。</em>
+            <em>经过算法解析，你在【${primaryData.name}】领域的潜能匹配度达到了顶峰。紧随其后的是你的隐藏天赋领域【${secondaryData.name}】（契合度 ${displaySecondaryScore}%）。</em>
         `;
     }
     // 启动测试
