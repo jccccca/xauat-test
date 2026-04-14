@@ -467,51 +467,76 @@
     }
 
     function showResult() {
-        // 隐藏题目区域，显示结果区域
         document.getElementById('quiz-container').style.display = 'none';
         
         const resContainer = document.getElementById('result-container');
         resContainer.style.display = 'block';
         resContainer.classList.add('fade-enter');
 
-        // 核心逻辑：排序找出得分最高的前两个学院
-        const sortedColleges = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
+        // 1. 动态计算每个学院的理论最高分 (Max Possible Score)
+        let maxPossibleScores = {};
+        for (let key in colleges) { maxPossibleScores[key] = 0; }
+        
+        questions.forEach(q => {
+            // 找出这道题里，每个学院能拿到的最高分
+            let tempMax = {};
+            q.opts.forEach(opt => {
+                for (let key in opt.s) {
+                    if (!tempMax[key] || opt.s[key] > tempMax[key]) {
+                        tempMax[key] = opt.s[key];
+                    }
+                }
+            });
+            // 累加到全局理论最高分中
+            for (let key in tempMax) {
+                maxPossibleScores[key] += tempMax[key];
+            }
+        });
+
+        // 2. 计算归一化百分比 (契合度)
+        let matchPercentages = {};
+        for (let key in scores) {
+            if (maxPossibleScores[key] > 0) {
+                // 计算百分比并保留一位小数
+                matchPercentages[key] = ((scores[key] / maxPossibleScores[key]) * 100).toFixed(1);
+            } else {
+                matchPercentages[key] = 0;
+            }
+        }
+
+        // 3. 根据百分比进行排序
+        const sortedColleges = Object.keys(matchPercentages).sort((a, b) => matchPercentages[b] - matchPercentages[a]);
         const primary = sortedColleges[0];
         const secondary = sortedColleges[1];
 
         const primaryData = colleges[primary];
         const secondaryData = colleges[secondary];
 
-      
-        const imageFileName = collegeImages[primary]; // 获取对应图片名
+        // 4. 处理单张圆形人物头像
+        const imageFileName = collegeImages[primary];
         const avatarImgEl = document.getElementById('res-avatar-img');
-
         if (imageFileName) {
             avatarImgEl.src = imageFileName;
         } else {
-            // 兜底图片（如果没有找到的话）
             avatarImgEl.src = "1.jpg";
         }
 
-        // --- 填充结果文本数据 ---
+        // 5. 填充结果文本数据
         document.getElementById('res-primary').innerText = primaryData.name;
         document.getElementById('res-secondary').innerText = `✨ 辅修建议 / 隐藏潜能：${secondaryData.name}`;
         
-        // 得分细节
-        document.getElementById('res-score-detail').innerText = `【${primaryData.name}】得分为 ${scores[primary]}分，在所有维度中匹配度最高。`;
+        // 显示百分比得分
+        document.getElementById('res-score-detail').innerText = `【${primaryData.name}】灵魂契合度高达 ${matchPercentages[primary]}%，在所有维度中匹配度最高。`;
         
-        // 渲染标签
         const tagsHtml = primaryData.tags.map(tag => `<span class="tag">#${tag}</span>`).join('');
         document.getElementById('res-tags').innerHTML = tagsHtml;
         
-        // 渲染描述
         document.getElementById('res-desc').innerHTML = `
             <strong>你的核心特质：</strong><br>
             ${primaryData.desc}<br><br>
-            <em>在本次30重维度的深度灵魂解析中，你在【${primaryData.name}】领域的潜能匹配度达到了顶峰。你所表现出的思维模式与该学院致力于培养的跨界人才特质高度契合。紧随其后的是你的隐藏天赋领域【${secondaryData.name}】。你适合在主修领域深度钻研的同时，跨界融合辅修领域的知识，成为建大最复合型的卓越灵魂！</em>
+            <em>在本次30重维度的深度灵魂解析中，你在【${primaryData.name}】领域的潜能匹配度达到了顶峰。紧随其后的是你的隐藏天赋领域【${secondaryData.name}】（契合度 ${matchPercentages[secondary]}%）。你适合在主修领域深度钻研的同时，跨界融合辅修领域的知识！</em>
         `;
     }
-
     // 启动测试
     renderQuestion();
 </script>
